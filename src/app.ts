@@ -1,0 +1,31 @@
+import express, { Application, Request, Response, NextFunction } from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import contactRoutes from './routes/contactRoutes';
+import commentRoutes from './routes/commentRoutes';
+import bookingRoutes from './routes/bookingRoutes'; // Import the new booking routes
+
+const app: Application = express();
+
+// Middleware
+app.use(helmet());
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Routes
+app.use('/api', contactRoutes);
+app.use('/api', commentRoutes);
+app.use('/api', bookingRoutes); // Add booking routes
+
+app.get('/', (req: Request, res: Response) => {
+  res.send('TypeScript Express Server Running');
+});
+
+// Error handling middleware
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+  console.error(err.stack);
+  res.status(500).send('Something broke!');
+});
+
+export default app;
