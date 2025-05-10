@@ -31,7 +31,6 @@ router.post('/contact', async (req: Request, res: Response):Promise<void> => {
       - Email: ${email}
       - Phone: ${phone || 'Not provided'}
       - Travel Date: ${travelDate || 'Not provided'}
-      - Party Size: ${partySize || 'Not provided'}
       - Safari Type: ${safariType || 'Not provided'}
       
       Message:
