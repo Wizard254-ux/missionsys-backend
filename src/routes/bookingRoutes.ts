@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { addJobToQueue } from '../services/emailService';
+import { sendEmailDirectly } from '../services/emailService';
 
 const router = Router();
 
@@ -40,10 +40,10 @@ router.post('/booking', async (req: Request, res: Response): Promise<void> => {
       ${additionalInfo || 'None provided'}
     `;
 
-    await addJobToQueue({
-      emailTo: process.env.ADMIN_EMAIL || "brianndesa262@gmail.com", // Default if not provided
-      code: formattedMessage
-    });
+    await sendEmailDirectly(
+      process.env.ADMIN_EMAIL || "brianndesa262@gmail.com", // Default if not provided
+      formattedMessage
+    );
 
     res.status(200).json({ success: true, message: 'Your booking request has been sent successfully' });
   } catch (error) {

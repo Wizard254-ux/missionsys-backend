@@ -20,8 +20,8 @@ app.use('/api', contactRoutes);
 app.use('/api', commentRoutes);
 app.use('/api', bookingRoutes); // Add booking routes
 
-app.get('/', (req: Request, res: Response) => {
-  res.send('TypeScript Express Server Running');
+app.get('/server/on', (req: Request, res: Response) => {
+  res.send(' Server Running');
 });
 
 // Error handling middleware

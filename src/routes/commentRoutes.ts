@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express';
-import { addToCommentQueue } from '../services/commentQueue';
+import { handleNewComment } from '../services/commentQueue';
 
 const router = express.Router();
 
@@ -28,7 +28,7 @@ router.post('/comment', async (req: Request, res: Response):Promise<void> => {
     }
     
     // Add to queue for processing
-    await addToCommentQueue({
+    await handleNewComment({
       name,
       email,
       comment,

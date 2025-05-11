@@ -1,4 +1,3 @@
-import Queue from 'bull';
 import axios from 'axios';
 
 // Define comment data interface
@@ -10,21 +9,14 @@ interface CommentData {
   createdAt: string;
 }
 
-// Create comment queue
-const commentQueue = new Queue('commentQueue', {
-  redis: {
-    host: process.env.REDIS_HOST || 'redis-16260.c91.us-east-1-3.ec2.redns.redis-cloud.com',
-    port: Number(process.env.REDIS_PORT) || 16260,
-    username: process.env.REDIS_USERNAME || 'default',
-    password: process.env.REDIS_PASSWORD || 'ioxboBnMjxrr1JzwFOdBNxy0vrSdXK3i',
-  },
-});
-
-// Process comment jobs
-commentQueue.process(async (job) => {
+/**
+ * Function to directly process a comment submission
+ * @param commentData The comment data to process
+ * @returns Object containing processing result
+ */
+export async function processComment(commentData: CommentData): Promise<{ notificationSent: boolean }> {
   try {
-    console.log('Processing comment job:', job.id);
-    const commentData = job.data as CommentData;
+    console.log('Processing comment for:', commentData.name);
     
     // // 1. Save to database (mock implementation)
     // const dbSaved = await saveCommentToDatabase(commentData);
@@ -32,14 +24,14 @@ commentQueue.process(async (job) => {
     
     // 2. Send notification email
     const notificationSent = await sendCommentNotification(commentData);
-    console.log('email sent ')
+    console.log('Email notification sent:', notificationSent);
     
     return { notificationSent };
   } catch (error) {
     console.error('Error processing comment:', error);
-    throw error;
+    return { notificationSent: false };
   }
-});
+}
 
 // Mock function to save comment to database
 // // In a real implementation, this would use an ORM like Prisma, Mongoose, TypeORM, etc.
@@ -58,18 +50,14 @@ commentQueue.process(async (job) => {
 //   }
 // }
 
-// Function to send notification email to admin
+/**
+ * Function to send notification email to admin about a new comment
+ * @param data The comment data to include in the notification
+ * @returns Promise resolving to boolean indicating success/failure
+ */
 async function sendCommentNotification(data: CommentData): Promise<boolean> {
   try {
-    const messageContent = `
-      Name: ${data.name}
-      Email: ${data.email}
-      Post ID: ${data.postId}
-      Date: ${new Date(data.createdAt).toLocaleString()}
-      
-      Comment:
-      ${data.comment}
-    `;
+    console.log('Sending comment notification email for comment by:', data.name);
     
     // Use your existing email API
     const response = await axios.post(
@@ -79,7 +67,7 @@ async function sendCommentNotification(data: CommentData): Promise<boolean> {
           name: "Lynnie Travis Adventures",
           email: "brianndesa262@gmail.com"
         },
-        to: [{ email: process.env.ADMIN_EMAIL }],
+        to: [{ email: process.env.ADMIN_EMAIL || 'brianndesa262@example.com' }],
         subject: "New Blog Comment Submission",
         htmlContent: `
           <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f4;">
@@ -128,6 +116,7 @@ async function sendCommentNotification(data: CommentData): Promise<boolean> {
       }
     );
     
+    console.log('Comment notification email API response status:', response.status);
     return response.status === 201;
   } catch (error: any) {
     console.error("Email notification failed:", error.response?.data || error.message);
@@ -135,16 +124,21 @@ async function sendCommentNotification(data: CommentData): Promise<boolean> {
   }
 }
 
-// Add job to queue
-export const addToCommentQueue = async (data: CommentData): Promise<void> => {
-  console.log('Adding comment to queue:', data);
-  await commentQueue.add(data, {
-    attempts: 3,
-    backoff: {
-      type: 'exponential',
-      delay: 2000
-    }
-  });
+/**
+ * Main export function to handle a new comment submission
+ * @param data The comment data to process
+ * @returns Promise resolving to object with notification result
+ */
+export const handleNewComment = async (data: CommentData): Promise<{ success: boolean }> => {
+  console.log('Handling new comment from:', data.name);
+  try {
+    // Process the comment directly
+    const result = await processComment(data);
+    return { success: result.notificationSent };
+  } catch (error) {
+    console.error('Failed to handle comment:', error);
+    return { success: false };
+  }
 };
 
-export default commentQueue;
+export default handleNewComment;

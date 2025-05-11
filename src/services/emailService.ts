@@ -1,35 +1,15 @@
-import Queue from 'bull';
 import axios from 'axios';
 
-// Create email queue
-const emailQueue = new Queue('emailQueue', {
-  redis: {
-    host: 'redis-16260.c91.us-east-1-3.ec2.redns.redis-cloud.com',
-    port: 16260,
-    username: 'default',
-    password: 'ioxboBnMjxrr1JzwFOdBNxy0vrSdXK3i',
-  },
-});
-
-// Process email jobs
-emailQueue.process(async (job) => {
-  try {
-    console.log('Processing email job:', job.id);
-    const result = await sendEmail(job.data.emailTo, job.data.code);
-    console.log('Email sent:', result);
-    return result;
-  } catch (error) {
-    console.error('Error sending email:', error);
-    throw error;
-  } finally {
-    // Clean up job
-    await job.remove();
-  }
-});
-
-// Function to send email via Brevo API
+/**
+ * Function to send email via Brevo API
+ * @param toEmail - Recipient email address
+ * @param messageContent - Content of the message to be sent
+ * @returns Promise resolving to boolean indicating success/failure
+ */
 async function sendEmail(toEmail: string, messageContent: string): Promise<boolean> {
   try {
+    console.log('Sending email to:', toEmail);
+    
     const response = await axios.post(
       "https://api.brevo.com/v3/smtp/email",
       {
@@ -60,12 +40,13 @@ async function sendEmail(toEmail: string, messageContent: string): Promise<boole
       {
         headers: {
           "accept": "application/json",
-          "api-key": process.env.BREVO_API_KEY , // Replace with actual API key from environment
+          "api-key": process.env.BREVO_API_KEY, // Replace with actual API key from environment
           "content-type": "application/json"
         }
       }
     );
     
+    console.log('Email API response status:', response.status);
     return response.status === 201;
   } catch (error: any) {
     console.error("Email sending failed:", error.response?.data || error.message);
@@ -73,16 +54,23 @@ async function sendEmail(toEmail: string, messageContent: string): Promise<boole
   }
 }
 
-// Add job to queue
-export const addJobToQueue = async (data: { emailTo: string, code: string }): Promise<void> => {
-  console.log('Adding job to email queue:', data.emailTo);
-  await emailQueue.add(data, {
-    attempts: 3,
-    backoff: {
-      type: 'exponential',
-      delay: 1000
-    }
-  });
+/**
+ * Direct email send function - use this as the main export
+ * @param emailTo - Recipient email address
+ * @param code - Email content/message to send
+ * @returns Promise resolving to boolean indicating success/failure
+ */
+export const sendEmailDirectly = async (emailTo: string, code: string): Promise<boolean> => {
+  console.log('Sending email directly to:', emailTo);
+  try {
+    const result = await sendEmail(emailTo, code);
+    console.log('Email sent successfully:', result);
+    return result;
+  } catch (error) {
+    console.error('Error in direct email send:', error);
+    return false;
+  }
 };
 
-export default emailQueue;
+// Default export for direct imports
+export default sendEmail;

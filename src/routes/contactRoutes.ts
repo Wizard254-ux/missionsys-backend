@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { addJobToQueue } from '../services/emailService';
+import { sendEmailDirectly } from '../services/emailService';
 
 const router = Router();
 
@@ -37,11 +37,10 @@ router.post('/contact', async (req: Request, res: Response):Promise<void> => {
       ${message}
     `;
 
-    await addJobToQueue({
-      emailTo: process.env.ADMIN_EMAIL || "brianndesa262@gmail.com", // Default if not provided
-    //   emailTo: emailTo || 'lynnietravisadventures.deals@gmail.com', // Default if not provided
-      code: formattedMessage // Reusing the code field to send our formatted message
-    });
+    await sendEmailDirectly(
+    process.env.ADMIN_EMAIL || "brianndesa262@gmail.com", // Default if not provided
+    formattedMessage // Reusing the code field to send our formatted message
+    );
 
     res.status(200).json({ success: true, message: 'Your message has been sent successfully' });
   } catch (error) {
