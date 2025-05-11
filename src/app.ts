@@ -10,7 +10,7 @@ const app: Application = express();
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: ['http://localhost:5173','https://meet.google.com/oei-dbhv-rxu'], // allow only this origin
+  origin: ['http://localhost:5173','https://travis-adventures.vercel.app'], // allow only this origin
   credentials: true,              // if using cookies or auth headers
 }));app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
